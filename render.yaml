@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: gaming-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false          # you paste this manually in the Render dashboard
+    healthCheckPath: /health
