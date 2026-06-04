@@ -47,7 +47,7 @@ def _channel_is_allowed(interaction: discord.Interaction) -> bool:
 
     # Category check
     if Config.ALLOWED_CATEGORY_ID is not None:
-        if channel.category_id != Config.ALLOWED_CATEGORY_ID:
+        if not channel.category_id in Config.ALLOWED_CATEGORY_ID:
             return False
 
     # Channel name prefix check
@@ -73,7 +73,7 @@ def channel_guard() -> Callable:
             return True
         # Silently inform only the caller
         await interaction.response.send_message(
-            "❌ This command can only be used in a **gaming lobby** channel "
+            "❌ This command can only be used in a **⚔️-maggod-lobby** channel "
             "inside the correct category.",
             ephemeral=True,
         )

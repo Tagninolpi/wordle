@@ -20,7 +20,7 @@ class WordleCog(commands.Cog):
 
     # ── /wordle ──────────────────────────────────────────────────
 
-    @app_commands.command(name="wordle", description="Play Wordle and other word games!")
+    @app_commands.command(name="wordle_mastery", description="Play Wordle and other word games!")
     @channel_guard()
     async def wordle(self, interaction: discord.Interaction):
         view = WordleMenuView(interaction.user.id)

@@ -12,14 +12,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 _BANK: dict[int, list[str]] = {}
+_VALID: set[str] = set()   # fast O(1) membership check for guess validation
 
 
 def load_word_bank() -> None:
-    """Populate _BANK. Call once during bot startup."""
-    global _BANK
+    """Populate _BANK and _VALID. Call once during bot startup."""
+    global _BANK, _VALID
     _BANK = _try_nltk() or _fallback()
+    _VALID = {w for words in _BANK.values() for w in words}
     for length, words in _BANK.items():
         logger.info(f"Word bank: {len(words)} words of length {length}")
+    logger.info(f"Valid guess set: {len(_VALID)} total words")
 
 
 def pick_word(length: int) -> str:
@@ -27,6 +30,11 @@ def pick_word(length: int) -> str:
     if not words:
         words = _fallback()[length]
     return random.choice(words).lower()
+
+
+def is_valid_word(word: str) -> bool:
+    """Return True if the word exists in the loaded word bank."""
+    return word.lower() in _VALID
 
 
 # ──────────────────────────────────────────────

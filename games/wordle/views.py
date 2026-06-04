@@ -14,7 +14,8 @@ from typing import Optional
 import discord
 
 from config import Config
-from games.wordle.game import WordleGame, render_guess_row, render_alphabet
+from games.wordle.game import WordleGame, render_grid, render_alphabet
+from games.wordle.words import is_valid_word
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +240,12 @@ class WordleGameView(_OwnedView):
             )
             return
 
+        if not is_valid_word(guess):
+            await self._update_action(
+                f"❌  **{guess.upper()}** is not in the word list — try again!"
+            )
+            return
+
         # Valid guess
         self.game.submit_guess(guess)
 
@@ -263,8 +270,7 @@ class WordleGameView(_OwnedView):
         self.stop()
 
         game = self.game
-        guess_lines = "\n".join(render_guess_row(g, c) for g, c in game.guesses)
-        plural      = "s" if game.attempts != 1 else ""
+        plural = "s" if game.attempts != 1 else ""
 
         embed = discord.Embed(
             title="🎉  Congratulations!",
@@ -277,11 +283,11 @@ class WordleGameView(_OwnedView):
         )
         embed.add_field(
             name="Guess history",
-            value=f"```\n{guess_lines}\n```",
+            value=render_grid(game.guesses),
             inline=False,
         )
         embed.add_field(
-            name="Letters",
+            name="Alphabet",
             value=render_alphabet(game.letter_states),
             inline=False,
         )
