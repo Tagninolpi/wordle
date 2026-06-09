@@ -1,19 +1,5 @@
 """
 games/wordle/game.py — Pure game logic, no Discord dependencies.
-
-Spacing rule
-------------
-Discord collapses multiple regular spaces outside code blocks.
-Wrapping field values in ``` preserves every space exactly.
-
-Inside a monospace code block:
-  - emoji  = 2 columns wide
-  - letter = 1 column wide
-  - space  = 1 column wide
-
-So 1 space between letters = 2 cols per cell = aligned under one emoji.
-LETTER_GAP below adds extra spaces on top of that mandatory 1.
-Change LETTER_GAP to tune the visual spacing.
 """
 
 import time
@@ -26,13 +12,6 @@ GREEN  = "🟩"
 UNSEEN = "⬜"
 
 ALPHABET = "abcdefghijklmnopqrstuvwxyz"
-
-# ── Spacing ────────────────────────────────────────────────────
-# Extra spaces added on top of the 1 mandatory space between letters.
-# 0 → "B R A V E"  (1 space, may feel tight)
-# 1 → "B  R  A  V  E"  (2 spaces, aligns with emoji width)  ← default
-# 2 → "B   R   A   V   E"  (3 spaces, wider)
-LETTER_GAP: int = 1
 
 
 # ── Evaluation ─────────────────────────────────────────────────
@@ -60,42 +39,29 @@ def evaluate_guess(guess: str, target: str) -> list[str]:
 
 # ── Render helpers ─────────────────────────────────────────────
 
-def _sep() -> str:
-    """Cell separator: 1 mandatory space + LETTER_GAP extras."""
-    return " " * LETTER_GAP
-
-
-def _sq_row(colors: list[str]) -> str:
-    return "".join(colors)
-
-
-def _let_row(word: str) -> str:
-    return _sep().join(ch.upper() for ch in word)
-
-
-def _code(text: str) -> str:
-    """Wrap in a code block so Discord preserves all spaces."""
-    return f"```\n{text}\n```"
-
-
 def render_guess_row(guess: str, colors: list[str]) -> str:
-    return _sq_row(colors) + "\n" + _let_row(guess)
+    """🟩⬛🟨⬛🟩 BRAVE  — squares left, word right, one space between."""
+    return "".join(colors) + " " + guess.upper()
 
 
 def render_grid(guesses: list) -> str:
+    """All guesses, one per line, no blank lines between them."""
     if not guesses:
         return "_No guesses yet — type a word in the chat!_"
-    body = "\n\n".join(render_guess_row(g, c) for g, c in guesses)
-    return _code(body)
+    return "\n".join(render_guess_row(g, c) for g, c in guesses)
 
 
 def render_alphabet(letter_states: dict[str, str]) -> str:
-    """Packed [square][letter] cells, no spaces, 13 per line."""
+    """
+    Packed [square][letter] cells, no spaces, 9 per line → 3 lines of 9/9/8.
+    9 cells * 3 cols each = 27 cols — safely fits Discord's embed width.
+    """
     def cell(ch: str) -> str:
         s = letter_states.get(ch, "unknown")
         sq = GREEN if s == "green" else YELLOW if s == "yellow" else GREY if s == "grey" else UNSEEN
         return sq + ch.upper()
-    chunks = [ALPHABET[:13], ALPHABET[13:]]
+
+    chunks = [ALPHABET[:9], ALPHABET[9:18], ALPHABET[18:]]
     return "\n".join("".join(cell(c) for c in chunk) for chunk in chunks)
 
 
@@ -140,7 +106,7 @@ class WordleGame:
         embed = discord.Embed(title="🔤  Wordle", color=discord.Color.blurple())
         embed.description = f"**{action_msg}**"
 
-        embed.add_field(name="Guesses",   value=render_grid(self.guesses),              inline=False)
-        embed.add_field(name="Alphabet",  value=render_alphabet(self.letter_states),    inline=False)
+        embed.add_field(name="Guesses",  value=render_grid(self.guesses),           inline=False)
+        embed.add_field(name="\u200b",   value=render_alphabet(self.letter_states), inline=False)
         embed.set_footer(text=f"Attempts: {self.attempts}  •  Word length: {self.word_length}")
         return embed
